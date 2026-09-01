@@ -1,0 +1,67 @@
+{
+  "homepage": {
+    "banner": null,
+    "introduction": null,
+    "finale": null,
+    "gallery": {
+      "facades": [
+        {
+          "file": null,
+          "x": 50,
+          "y": 50,
+          "width": 99.97,
+          "height": 75.2668,
+          "zoom": 1.0003,
+          "offsetX": 0,
+          "offsetY": 0,
+          "title": "",
+          "description": "",
+          "index": 1,
+          "subimages": []
+        },
+        {
+          "file": null,
+          "title": "qsdqsdqs",
+          "description": "qsdqsdqs",
+          "index": 24,
+          "x": 50,
+          "y": 50,
+          "width": 79.6763,
+          "height": 47.8066,
+          "zoom": 1.2551,
+          "offsetX": 0,
+          "offsetY": 0,
+          "subimages": []
+        },
+        {
+          "file": null,
+          "title": "",
+          "description": "",
+          "index": 3,
+          "x": 50,
+          "y": 50,
+          "width": 60,
+          "height": 61.9065,
+          "zoom": 1.6667,
+          "offsetX": 0,
+          "offsetY": 0,
+          "subimages": []
+        },
+        {
+          "file": null,
+          "title": "",
+          "description": "",
+          "index": 4,
+          "x": 50,
+          "y": 50,
+          "width": 60,
+          "height": 45,
+          "zoom": 1.6667,
+          "offsetX": 0,
+          "offsetY": 0,
+          "subimages": []
+        }
+      ]
+    }
+  }
+}
