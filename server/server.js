@@ -9,6 +9,8 @@ const mediaRouter = require("./system/media");
 const textMachineRouter = require("./system/textmachine");
 const reviewsMachineRouter = require("./system/reviewsmachine");
 const viewsRouter = require("./system/views");
+// 👇 NOTICE: ./system/demandeavis (with /system/)
+const demandeAvisRouter = require("./system/demandeavis");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,9 +18,6 @@ const PORT = process.env.PORT || 5000;
 // ============================================================
 // PROJECTS DIRECTORY
 // ============================================================
-
-// Correct location:
-// <project-root>/system/projects
 
 const projectsDirectory = path.join(__dirname, "system", "projects");
 
@@ -70,14 +69,13 @@ app.use(
 // ============================================================
 
 app.use("/api/admin", adminRouter);
-
 app.use("/api/media", mediaRouter);
-
 app.use("/api/text", textMachineRouter);
-
 app.use("/api/reviews", reviewsMachineRouter);
-
 app.use("/api/views", viewsRouter);
+
+// 👇 Mounts the /demandeavis router
+app.use("/demandeavis", demandeAvisRouter);
 
 // ============================================================
 // HEALTH CHECK
@@ -98,9 +96,5 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Projects directory: ${projectsDirectory}`);
 });
-
-// ============================================================
-// EXPORT
-// ============================================================
 
 module.exports = app;

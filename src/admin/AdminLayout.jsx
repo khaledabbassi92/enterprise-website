@@ -12,6 +12,7 @@ import {
   Home,
   Star,
   ChevronDown,
+  Inbox,
 } from "lucide-react";
 
 export default function AdminLayout() {
@@ -76,7 +77,7 @@ export default function AdminLayout() {
   };
 
   // ============================================================
-  // NAVIGATION
+  // NAVIGATION (Demandes d'avis placed above Avis clients)
   // ============================================================
 
   const navigation = [
@@ -94,6 +95,11 @@ export default function AdminLayout() {
       name: "Éditeur statique",
       path: "/admin/editeur-statique",
       icon: FileText,
+    },
+    {
+      name: "Demandes d'avis",
+      path: "/admin/demandes-avis",
+      icon: Inbox,
     },
     {
       name: "Avis clients",

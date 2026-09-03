@@ -33,7 +33,8 @@ import {
   Quote,
 } from "lucide-react";
 
-import certificatImage from "./certificat.png";
+import certificat1 from "./certificat1.png";
+import certificat2 from "./certificat2.png";
 
 /* ============================================================
    API CONFIGURATION
@@ -1025,6 +1026,7 @@ export default function Home() {
   const [openFaq, setOpenFaq] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [hiddenTextCards, setHiddenTextCards] = useState({});
+  const [currentCertificatIndex, setCurrentCertificatIndex] = useState(0);
 
   const experienceYears = calculateExperience(EXPERIENCE_START_DATE);
 
@@ -1531,6 +1533,19 @@ export default function Home() {
     [slotCrops, getCropStyle]
   );
 
+  const certificatImages = [certificat1, certificat2];
+  const currentCertificat = certificatImages[currentCertificatIndex] || certificat1;
+
+  const nextCertificat = (e) => {
+    if (e) e.stopPropagation();
+    setCurrentCertificatIndex((prev) => (prev === 0 ? 1 : 0));
+  };
+
+  const prevCertificat = (e) => {
+    if (e) e.stopPropagation();
+    setCurrentCertificatIndex((prev) => (prev === 1 ? 0 : 1));
+  };
+
   /* ============================================================
      RENDER
   ============================================================ */
@@ -1846,16 +1861,61 @@ export default function Home() {
                     </div>
                   </div>
 
+                  {/* SLIDER CERTIFICAT PROPRE */}
                   <div className="relative overflow-hidden rounded-xl border border-[#dddddd] bg-white">
                     <img
-                      src={certificatImage}
-                      alt="Certificat de l'entreprise"
+                      src={currentCertificat}
+                      alt="Certificat officiel de l'entreprise"
                       loading="lazy"
                       decoding="async"
-                      className="block h-auto max-h-[650px] w-full object-contain transition-transform duration-700 group-hover:scale-[1.015]"
+                      className="block h-auto max-h-[650px] w-full object-contain transition-transform duration-500 group-hover:scale-[1.01]"
                       onContextMenu={(e) => e.preventDefault()}
                       onDragStart={(e) => e.preventDefault()}
                     />
+
+                    {/* Flèche gauche */}
+                    <button
+                      type="button"
+                      onClick={prevCertificat}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-black shadow-md transition hover:bg-red-600 hover:text-white active:scale-95"
+                      aria-label="Image précédente"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+
+                    {/* Flèche droite */}
+                    <button
+                      type="button"
+                      onClick={nextCertificat}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-black shadow-md transition hover:bg-red-600 hover:text-white active:scale-95"
+                      aria-label="Image suivante"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+
+                    {/* Points indicateurs de slide discrets */}
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-black/40 px-2 py-1 backdrop-blur-sm">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentCertificatIndex(0)}
+                        className={`h-1.5 rounded-full transition-all ${
+                          currentCertificatIndex === 0
+                            ? "bg-white w-4"
+                            : "bg-white/50 w-1.5"
+                        }`}
+                        aria-label="Volet 1"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setCurrentCertificatIndex(1)}
+                        className={`h-1.5 rounded-full transition-all ${
+                          currentCertificatIndex === 1
+                            ? "bg-white w-4"
+                            : "bg-white/50 w-1.5"
+                        }`}
+                        aria-label="Volet 2"
+                      />
+                    </div>
 
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/[0.04] via-transparent to-white/[0.08]" />
                   </div>
@@ -1867,7 +1927,7 @@ export default function Home() {
                     </div>
 
                     <a
-                      href={certificatImage}
+                      href={currentCertificat}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-xs font-semibold text-[#171717] transition hover:text-red-600"

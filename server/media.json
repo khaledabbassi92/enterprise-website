@@ -1,21 +1,12 @@
 {
   "homepage": {
-    "banner": {
-      "file": "1787829292609-7d12b6189d68254469dc58b69ebcf4ee.mp4",
-      "x": 50,
-      "y": 50,
-      "width": 100,
-      "height": 100,
-      "zoom": 1,
-      "offsetX": 0,
-      "offsetY": 0
-    },
+    "banner": null,
     "introduction": null,
     "finale": null,
     "gallery": {
       "facades": [
         {
-          "file": "1787876736901-67385ebbc68808eae4275b2829811908.jfif",
+          "file": null,
           "x": 50,
           "y": 50,
           "width": 100,
@@ -26,10 +17,7 @@
           "title": "",
           "description": "",
           "index": 1,
-          "subimages": [
-            "1787876736870-027ce77962eae255ddfe2345c2575084.jpg",
-            "1787876736888-d503eed20e84ac953431c34c9b1734e3.jpg"
-          ]
+          "subimages": []
         }
       ]
     }

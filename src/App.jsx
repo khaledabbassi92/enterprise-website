@@ -23,6 +23,8 @@ import Dashboard from "./admin/pages/Dashboard";
 import DynamicEditor from "./admin/pages/DynamicEditor";
 import StaticEditor from "./admin/pages/StaticEditor";
 import ReviewsManager from "./admin/pages/ReviewsManager";
+// 👇 1. Import your new Admin Demands page
+import ReviewsDemands from "./admin/pages/ReviewsDemands";
 
 function Layout() {
   const location = useLocation();
@@ -120,6 +122,12 @@ function Layout() {
             <Route
               path="avis"
               element={<ReviewsManager />}
+            />
+
+            {/* 👇 2. Add the route here: accessible at /admin/demandes-avis */}
+            <Route
+              path="demandes-avis"
+              element={<ReviewsDemands />}
             />
 
           </Route>
