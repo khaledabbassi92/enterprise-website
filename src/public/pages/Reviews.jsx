@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Quote, Star, X, MessageSquarePlus } from "lucide-react";
 
 // Point to your backend port:
-const API_URL = "http://localhost:5000";
+const API_URL = "";
 
 export default function Reviews() {
   const [reviews, setReviews] = useState([]);
