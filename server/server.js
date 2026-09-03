@@ -2,9 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const http = require("http");
 require("dotenv").config();
 
-// Global crash handlers to catch silent errors in Railway logs
+// Global crash handlers
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
@@ -21,13 +22,18 @@ const viewsRouter = require("./system/views");
 const demandeAvisRouter = require("./system/demandeavis");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 // Ensure system projects directory exists
 const projectsDirectory = path.join(__dirname, "system", "projects");
 if (!fs.existsSync(projectsDirectory)) {
   fs.mkdirSync(projectsDirectory, { recursive: true });
 }
+
+// Request logger to see every incoming request in Railway runtime logs
+app.use((req, res, next) => {
+  console.log(`[INCOMING] ${req.method} ${req.url}`);
+  next();
+});
 
 // CORS setup
 app.use(
@@ -49,7 +55,7 @@ app.use(
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// API Health Check (instant response for Railway probes)
+// API Health Check (instant 200 for Railway edge checks)
 app.get("/api/health", (req, res) => {
   return res.status(200).json({
     success: true,
@@ -74,50 +80,50 @@ const indexPath = path.join(clientDistPath, "index.html");
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
 } else {
-  console.warn(`[WARNING] Dist directory not found at: ${clientDistPath}. Run 'npm run build' if frontend is needed.`);
+  console.warn(`[WARNING] Dist directory not found at: ${clientDistPath}.`);
 }
 
-// React SPA fallback (Safely handles missing index.html)
+// React SPA fallback
 app.get("*", (req, res, next) => {
-  // If requesting an API route that didn't match, return 404 JSON instead of index.html
   if (req.path.startsWith("/api/")) {
     return res.status(404).json({ success: false, message: "Endpoint not found" });
   }
 
   if (fs.existsSync(indexPath)) {
     return res.sendFile(indexPath, (err) => {
-      if (err) {
-        console.error("Failed to send index.html:", err);
-        if (!res.headersSent) {
-          res.status(500).send("Error serving application.");
-        }
+      if (err && !res.headersSent) {
+        res.status(500).send("Error loading client.");
       }
     });
   }
 
-  // Fallback message so Railway health checks don't hang if frontend is not built
   return res.status(200).send(
-    "API server is running. (Note: Frontend 'dist/index.html' was not found. Please verify your build command)."
+    "API is running! (Note: 'dist/index.html' not found yet. Run 'npm run build' to generate the frontend)."
   );
 });
 
 // Global Express error handler
 app.use((err, req, res, next) => {
   console.error("Express Error:", err);
-  if (res.headersSent) {
-    return next(err);
-  }
-  res.status(500).json({
-    success: false,
-    message: "Internal server error",
-    error: process.env.NODE_ENV === "production" ? undefined : err.message,
-  });
+  if (res.headersSent) return next(err);
+  res.status(500).json({ success: false, message: "Internal server error" });
 });
 
-// Start Server listening on 0.0.0.0
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server successfully started and listening on 0.0.0.0:${PORT}`);
-  console.log(`Projects directory: ${projectsDirectory}`);
+// Listen on ALL possible ports (process.env.PORT, 8080, 5000, 3000)
+// Using default host binding allows dual-stack (IPv4 and IPv6) so Railway's proxy connects instantly.
+const primaryPort = Number(process.env.PORT) || 8080;
+const portsToListen = Array.from(new Set([primaryPort, 8080, 5000, 3000]));
+
+portsToListen.forEach((port) => {
+  const server = http.createServer(app);
+  server.on("error", (err) => {
+    if (err.code !== "EADDRINUSE") {
+      console.warn(`Port ${port} error:`, err.message);
+    }
+  });
+  server.listen(port, () => {
+    console.log(`Server listening on port ${port} (IPv4/IPv6 dual-stack)`);
+  });
 });
 
 module.exports = app;
