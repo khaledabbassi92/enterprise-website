@@ -56,14 +56,13 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Serve React/Vite frontend
-app.use(express.static(path.join(__dirname, "client", "dist")));
+// Serve React/Vite frontend (build output lives at repo-root /dist)
+const clientDistPath = path.join(__dirname, "..", "dist");
+app.use(express.static(clientDistPath));
 
 // React SPA fallback
 app.get("*", (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "client", "dist", "index.html")
-  );
+  res.sendFile(path.join(clientDistPath, "index.html"));
 });
 
 // Start server
