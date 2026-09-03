@@ -57,7 +57,6 @@ const HOMEPAGE_SLOTS = {
 export default function DynamicEditor() {
   const fileInputRef = useRef(null);
   const editorMediaRef = useRef(null);
-  const touchResizeRef = useRef(null);
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [media, setMedia] = useState([]);
@@ -132,7 +131,6 @@ export default function DynamicEditor() {
         setError(data?.message || "Impossible de charger les médias.");
       }
 
-      // Directly set the list as returned by Express (sorted newest first by server)
       setMedia(list);
     } catch (err) {
       console.error("Fetch media error:", err);
@@ -256,7 +254,6 @@ export default function DynamicEditor() {
       setSelectedFiles([]);
       setSuccess(data.message || "Médias importés avec succès.");
 
-      // Refresh list directly from server which sorts newest first
       await loadMedia();
     } catch (err) {
       console.error("Upload error:", err);
@@ -565,7 +562,7 @@ export default function DynamicEditor() {
     setSuccess("");
     setGalleryTitle("");
     setGalleryDescription("");
-    setGalleryIndex(String((existingProjects.length || 0) + 1));
+    setGalleryIndex(""); // Left blank so no random index appears
     const isVideo = getMediaType(item) === "video";
     setMediaCrop({ x: 50, y: 50, width: isVideo ? 100 : 60, height: isVideo ? 100 : 45 });
     setMediaEditor({
@@ -863,7 +860,6 @@ export default function DynamicEditor() {
       >
         <div className="relative aspect-video overflow-hidden rounded-t-lg bg-gray-100">
           {renderMediaPreview(item)}
-          {/* Fallback placeholder */}
           <div className="hidden h-full w-full flex-col items-center justify-center bg-gray-50 text-gray-400">
             <FileImage size={24} />
             <span className="text-[10px] mt-1">Image indisponible</span>
@@ -976,7 +972,7 @@ export default function DynamicEditor() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6" onSubmit={(e) => e.preventDefault()}>
+    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6">
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-red-600">Administration</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-gray-900">Éditeur dynamique</h1>
@@ -1216,7 +1212,6 @@ export default function DynamicEditor() {
                   )}
                 </div>
 
-                {/* Filter by Type */}
                 <div className="flex items-center gap-1.5 self-start sm:self-auto">
                   <button
                     type="button"
