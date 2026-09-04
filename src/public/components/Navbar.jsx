@@ -53,7 +53,6 @@ export default function Navbar() {
 
   const phoneHref = phone ? `tel:${phone.replace(/[^0-9+]/g, "")}` : null;
 
-  /* Exact public routes matching App.jsx */
   const links = [
     { label: "Accueil", href: "/" },
     { label: "Services", href: "/services" },
@@ -63,7 +62,6 @@ export default function Navbar() {
     { label: "Contact", href: "/contact" },
   ];
 
-  /* Smoothly navigate to /contact and scroll top */
   const handleDevisGratuitClick = (e) => {
     e.preventDefault();
     setIsOpen(false);
@@ -82,39 +80,40 @@ export default function Navbar() {
       <div className="h-[4px] bg-red-700" />
 
       <div className="border-b border-gray-200/80 bg-white/98 shadow-[0_8px_30px_rgba(0,0,0,0.07)] backdrop-blur-xl">
-        <div className="mx-auto max-w-[1500px] px-5 sm:px-8 lg:px-10">
-          <div className="flex h-[92px] items-center justify-between">
-            
-            {/* BRAND: AAA centered on top of MIRA (Same font size) */}
+        <div className="mx-auto max-w-[1500px] px-3 sm:px-6 lg:px-10">
+          <div className="flex h-[74px] items-center justify-between sm:h-[88px] lg:h-[92px]">
+
+            {/* BRAND */}
             <Link
               to="/"
               onClick={handleLinkClick}
               className="group flex shrink-0 items-center"
             >
               <div className="flex flex-col items-center select-none leading-none">
-                {/* AAA on top */}
-                <span className="text-[20px] sm:text-[23px] font-black text-center text-red-700 tracking-tight leading-none">
+                <span className="text-[17px] sm:text-[23px] font-black text-center text-red-700 tracking-tight leading-none">
                   AAA
                 </span>
-                {/* MIRA on bottom */}
-                <span className="text-[20px] sm:text-[23px] font-black text-center text-gray-950 tracking-tight leading-none transition-colors duration-200 group-hover:text-red-700">
+
+                <span className="text-[17px] sm:text-[23px] font-black text-center text-gray-950 tracking-tight leading-none transition-colors duration-200 group-hover:text-red-700">
                   MIRA
                 </span>
 
-                <div className="mt-[5px] flex items-center gap-1.5">
-                  <span className="h-[2px] w-4 rounded-full bg-red-700" />
-                  <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                <div className="mt-[3px] flex items-center gap-1 sm:mt-[5px] sm:gap-1.5">
+                  <span className="h-[2px] w-3 sm:w-4 rounded-full bg-red-700" />
+
+                  <span className="text-[6px] sm:text-[8px] font-bold uppercase tracking-[0.14em] sm:tracking-[0.18em] text-gray-500">
                     Ravalement & ITE
                   </span>
                 </div>
               </div>
             </Link>
 
-            {/* DESKTOP NAVIGATION (Links to all public routes) */}
+            {/* DESKTOP NAVIGATION */}
             <nav className="ml-auto mr-10 hidden items-center lg:flex">
               <div className="flex items-center">
                 {links.map((link) => {
                   const isActive = location.pathname === link.href;
+
                   return (
                     <Link
                       key={link.href}
@@ -131,6 +130,7 @@ export default function Navbar() {
                       >
                         {link.label}
                       </span>
+
                       <span
                         className={`absolute bottom-0 left-[16px] right-[16px] h-[2px] origin-left rounded-full bg-red-700 transition-transform duration-300 ${
                           isActive
@@ -146,7 +146,6 @@ export default function Navbar() {
 
             {/* DESKTOP ACTIONS */}
             <div className="hidden items-center gap-4 lg:flex">
-              {/* PHONE (Only rendered if available from server) */}
               {phone && phoneHref && (
                 <a
                   href={phoneHref}
@@ -159,10 +158,12 @@ export default function Navbar() {
                       className="text-red-700 transition-transform duration-200 group-hover:scale-110"
                     />
                   </div>
+
                   <div className="leading-none">
                     <span className="block text-[9px] font-bold uppercase tracking-[0.16em] text-gray-400">
                       Appelez-nous
                     </span>
+
                     <span className="mt-[6px] block text-[13px] font-bold tracking-wide text-red-700 transition-colors duration-200 group-hover:text-red-800">
                       {phone}
                     </span>
@@ -170,10 +171,8 @@ export default function Navbar() {
                 </a>
               )}
 
-              {/* DIVIDER */}
               {phone && <div className="mx-1 h-10 w-px bg-gray-200" />}
 
-              {/* CTA: DEVIS GRATUIT -> Takes directly to /contact */}
               <Link
                 to="/contact"
                 onClick={handleDevisGratuitClick}
@@ -182,6 +181,7 @@ export default function Navbar() {
                 <span className="text-[13px] font-bold tracking-wide">
                   Devis gratuit
                 </span>
+
                 <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/15 transition-colors group-hover:bg-white/25">
                   <ArrowUpRight
                     size={14}
@@ -193,20 +193,23 @@ export default function Navbar() {
             </div>
 
             {/* MOBILE CONTROLS */}
-            <div className="flex items-center gap-3 lg:hidden">
-              {/* MOBILE PHONE (Only rendered if available from server) */}
+            <div className="flex items-center gap-2 sm:gap-3 lg:hidden">
+
+              {/* PHONE BUTTON (Now clearly displays the phone number on mobile) */}
               {phone && phoneHref && (
                 <a
                   href={phoneHref}
-                  aria-label={`Appeler AAA MIRA au ${phone}`}
-                  className="group flex items-center gap-2 text-red-700 transition-colors hover:text-red-800"
+                  aria-label={`Appeler au ${phone}`}
+                  className="group flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-red-700 transition-all active:scale-95 border border-red-100 sm:px-3 sm:py-2"
                 >
                   <Phone
-                    size={17}
-                    strokeWidth={2}
+                    size={14}
+                    strokeWidth={2.2}
                     className="shrink-0 text-red-700"
                   />
-                  <span className="whitespace-nowrap text-[11px] font-bold tracking-wide text-red-700 sm:text-[13px]">
+
+                  {/* FIXED: Removed `hidden sm:inline`, now always visible and neatly sized */}
+                  <span className="text-[11px] sm:text-[13px] font-bold tracking-tight text-red-700 whitespace-nowrap">
                     {phone}
                   </span>
                 </a>
@@ -218,12 +221,12 @@ export default function Navbar() {
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
                 aria-expanded={isOpen}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white text-red-700 transition-all duration-200 hover:bg-red-50 hover:shadow-sm"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white text-red-700 transition-all duration-200 hover:bg-red-50 hover:shadow-sm sm:h-10 sm:w-10 active:scale-95"
               >
                 {isOpen ? (
-                  <X size={20} strokeWidth={2.2} />
+                  <X size={19} strokeWidth={2.2} />
                 ) : (
-                  <Menu size={20} strokeWidth={2.2} />
+                  <Menu size={19} strokeWidth={2.2} />
                 )}
               </button>
             </div>
@@ -234,29 +237,54 @@ export default function Navbar() {
         <div
           className={`overflow-hidden transition-all duration-300 ease-out lg:hidden ${
             isOpen
-              ? "max-h-[650px] opacity-100"
+              ? "max-h-[720px] opacity-100"
               : "pointer-events-none max-h-0 opacity-0"
           }`}
         >
           <div className="border-t border-gray-100 bg-white">
-            <div className="mx-auto max-w-[1500px] px-5 py-5 sm:px-8">
-              {/* MOBILE NAVIGATION LINKS */}
+            <div className="mx-auto max-w-[1500px] px-4 py-4 sm:px-8 sm:py-5">
+
+              {/* DIRECT CALL CARD IN MOBILE MENU */}
+              {phone && phoneHref && (
+                <a
+                  href={phoneHref}
+                  className="mb-4 flex items-center justify-between rounded-xl bg-red-50 p-3.5 border border-red-100 text-red-700 transition active:bg-red-100"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-600 text-white">
+                      <Phone size={16} />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-red-600">
+                        Appelez-nous directement
+                      </div>
+                      <div className="text-sm font-bold text-gray-950">
+                        {phone}
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-red-500" />
+                </a>
+              )}
+
               <nav className="flex flex-col">
                 {links.map((link, index) => {
                   const isActive = location.pathname === link.href;
+
                   return (
                     <Link
                       key={link.href}
                       to={link.href}
                       onClick={handleLinkClick}
-                      className="group flex items-center justify-between border-b border-gray-100 py-[17px]"
+                      className="group flex items-center justify-between border-b border-gray-100 py-[15px] sm:py-[17px]"
                     >
                       <div className="flex items-center gap-4">
                         <span className="w-5 text-[9px] font-bold tracking-widest text-gray-300">
                           0{index + 1}
                         </span>
+
                         <span
-                          className={`text-[15px] font-semibold transition-colors ${
+                          className={`text-[14px] sm:text-[15px] font-semibold transition-colors ${
                             isActive
                               ? "text-red-700"
                               : "text-gray-800 group-hover:text-red-700"
@@ -265,6 +293,7 @@ export default function Navbar() {
                           {link.label}
                         </span>
                       </div>
+
                       <ChevronRight
                         size={17}
                         className="text-gray-300 transition-all group-hover:translate-x-1 group-hover:text-red-700"
@@ -274,27 +303,27 @@ export default function Navbar() {
                 })}
               </nav>
 
-              {/* MOBILE CTA: DEVIS GRATUIT -> /contact */}
               <Link
                 to="/contact"
                 onClick={handleDevisGratuitClick}
-                className="group mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-red-700 p-4 text-white shadow-sm transition-all duration-200 hover:bg-red-800 hover:shadow-md"
+                className="group mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-red-700 p-3.5 text-white shadow-sm transition-all duration-200 hover:bg-red-800 hover:shadow-md sm:mt-5 sm:p-4"
               >
                 <span className="text-sm font-bold">
                   Demander un devis
                 </span>
+
                 <ArrowUpRight
                   size={16}
                   className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                 />
               </Link>
 
-              {/* MOBILE FOOTER SIGNATURE */}
-              <div className="mt-6 flex flex-col gap-2 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+              <div className="mt-5 flex flex-col gap-2 border-t border-gray-100 pt-4 sm:mt-6 sm:pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-[0.16em] text-gray-400">
                   AAA MIRA · Ravalement & ITE
                 </span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-red-700">
+
+                <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.16em] text-red-700">
                   Qualité · Durabilité
                 </span>
               </div>

@@ -19,7 +19,6 @@ export default function Reviews() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // STRICTEMENT: name, contact, description, rating, timeSent (pas de nom, pas d'id)
     const payload = {
       name: name.trim(),
       contact: contact.trim(),
@@ -115,8 +114,8 @@ export default function Reviews() {
     return total / ratings.length;
   }, [reviews]);
 
-  const renderStars = (rating, size = 13) => {
-    const safeRating = Math.min(5, Math.max(0, Number(rating) || 0));
+  const renderStars = (starRating, size = 13) => {
+    const safeRating = Math.min(5, Math.max(0, Number(starRating) || 0));
 
     return (
       <div className="flex items-center gap-1">
@@ -129,7 +128,7 @@ export default function Reviews() {
           return (
             <div
               key={star}
-              className="relative"
+              className="relative shrink-0"
               style={{ width: `${size}px`, height: `${size}px` }}
             >
               <Star
@@ -155,40 +154,40 @@ export default function Reviews() {
   };
 
   return (
-    <section className="bg-[#f5f5f5] px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
+    <section className="bg-[#f5f5f5] px-4 py-12 sm:px-10 lg:px-16 lg:py-28">
       <div className="mx-auto max-w-[1280px]">
         {/* HEADER */}
-        <div className="mb-12 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+        <div className="mb-8 flex flex-col justify-between gap-5 sm:mb-12 sm:flex-row sm:items-end">
           <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600">
-              <span className="h-px w-7 bg-red-600" />
+              <span className="h-px w-6 sm:w-7 bg-red-600" />
               Avis clients
             </span>
 
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-[#171717] sm:text-4xl lg:text-5xl">
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-[#171717] sm:text-4xl lg:text-5xl leading-tight">
               Ce que nos clients pensent de notre travail.
             </h1>
 
-            <p className="mt-4 max-w-xl text-sm leading-6 text-[#707070] sm:text-base">
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#707070] sm:text-base">
               Des retours simples et authentiques de personnes qui nous ont fait
               confiance pour leurs travaux.
             </p>
 
             {!loading && !error && reviews.length > 0 && (
-              <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-[#e3e3e3] bg-white px-4 py-2.5 shadow-sm">
-                {renderStars(overallRating)}
-                <span className="text-sm font-bold text-[#171717]">
+              <div className="mt-5 inline-flex items-center gap-2.5 rounded-full border border-[#e3e3e3] bg-white px-3.5 py-2 shadow-sm sm:px-4 sm:py-2.5">
+                {renderStars(overallRating, 14)}
+                <span className="text-xs sm:text-sm font-bold text-[#171717]">
                   {overallRating.toFixed(1)} / 5
                 </span>
               </div>
             )}
           </div>
 
-          <div className="shrink-0">
+          <div className="w-full shrink-0 sm:w-auto">
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 cursor-pointer active:scale-95"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 cursor-pointer active:scale-95 sm:w-auto min-h-[44px]"
             >
               <MessageSquarePlus size={18} />
               <span>Laisser un avis</span>
@@ -202,7 +201,7 @@ export default function Reviews() {
             {[1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="h-64 animate-pulse rounded-2xl border border-[#e4e4e4] bg-white"
+                className="h-56 sm:h-64 animate-pulse rounded-2xl border border-[#e4e4e4] bg-white"
               />
             ))}
           </div>
@@ -210,7 +209,7 @@ export default function Reviews() {
 
         {/* ERROR */}
         {!loading && error && (
-          <div className="mx-auto max-w-md rounded-2xl border border-[#e5e5e5] bg-white p-8 text-center">
+          <div className="mx-auto max-w-md rounded-2xl border border-[#e5e5e5] bg-white p-6 sm:p-8 text-center">
             <div className="text-sm font-semibold text-[#333333]">
               Impossible de charger les avis.
             </div>
@@ -220,7 +219,7 @@ export default function Reviews() {
 
         {/* EMPTY */}
         {!loading && !error && reviews.length === 0 && (
-          <div className="mx-auto max-w-md rounded-2xl border border-dashed border-[#dddddd] bg-white p-10 text-center">
+          <div className="mx-auto max-w-md rounded-2xl border border-dashed border-[#dddddd] bg-white p-8 sm:p-10 text-center">
             <div className="text-sm font-semibold text-[#333333]">
               Aucun avis disponible.
             </div>
@@ -242,36 +241,36 @@ export default function Reviews() {
               return (
                 <article
                   key={review.id || `${review.name}-${review.order ?? index}-${index}`}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-[#e3e3e3] bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#d5d5d5] hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)]"
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#e3e3e3] bg-white p-4 sm:p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#d5d5d5] hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)]"
                 >
                   <Quote
-                    size={60}
+                    size={48}
                     strokeWidth={1}
-                    className="absolute right-3 top-3 rotate-180 text-red-600/[0.05] transition-transform duration-500 group-hover:scale-110"
+                    className="absolute right-2.5 top-2.5 rotate-180 text-red-600/[0.04] transition-transform duration-500 group-hover:scale-110 pointer-events-none"
                   />
 
-                  <div className="relative z-10 flex items-start justify-between gap-3">
+                  <div className="relative z-10 flex items-center justify-between gap-2">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#171717] text-xs font-bold text-white">
                       {review.name ? review.name.charAt(0).toUpperCase() : "C"}
                     </div>
 
-                    <div className="flex flex-col items-end gap-1 rounded-full bg-red-50 px-3 py-1.5">
-                      {renderStars(safeRating)}
+                    <div className="flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 sm:px-3 sm:py-1.5">
+                      {renderStars(safeRating, 12)}
                       <span className="text-[11px] font-bold text-[#707070]">
-                        {safeRating.toFixed(1)} / 5
+                        {safeRating.toFixed(1)}/5
                       </span>
                     </div>
                   </div>
 
-                  <div className="relative z-10 my-4 flex-1">
-                    <p className="text-sm font-medium leading-relaxed text-[#333333]">
+                  <div className="relative z-10 my-3 sm:my-4 flex-1">
+                    <p className="text-sm font-medium leading-relaxed text-[#333333] break-words">
                       {review.description || ""}
                     </p>
                   </div>
 
                   <div className="relative z-10 flex items-center justify-between border-t border-[#eeeeee] pt-3">
                     <div>
-                      <div className="text-xs font-bold text-[#171717]">
+                      <div className="text-xs font-bold text-[#171717] truncate max-w-[200px]">
                         {review.name || "Client"}
                       </div>
                       <div className="mt-0.5 text-[11px] text-[#999999]">
@@ -289,26 +288,26 @@ export default function Reviews() {
       {/* MODAL FORM */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-3 sm:p-4 overflow-y-auto"
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            className="relative my-auto w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="absolute right-4 top-4 p-1 text-gray-400 hover:text-gray-600 cursor-pointer"
+              className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 cursor-pointer"
             >
               <X size={20} />
             </button>
 
-            <h2 className="text-xl font-bold text-[#171717] mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-[#171717] mb-4 pr-8">
               Laisser un avis
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
                   Nom
@@ -319,7 +318,7 @@ export default function Reviews() {
                   placeholder="Votre nom"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-600"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base sm:text-sm outline-none focus:border-red-600"
                 />
               </div>
 
@@ -333,7 +332,7 @@ export default function Reviews() {
                   placeholder="Votre email ou numéro"
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-600"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base sm:text-sm outline-none focus:border-red-600"
                 />
               </div>
 
@@ -350,7 +349,7 @@ export default function Reviews() {
                   placeholder="5.0"
                   value={rating}
                   onChange={(e) => setRating(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-600"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base sm:text-sm outline-none focus:border-red-600"
                 />
               </div>
 
@@ -364,19 +363,19 @@ export default function Reviews() {
                   placeholder="Votre avis..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-600 resize-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base sm:text-sm outline-none focus:border-red-600 resize-none"
                 />
               </div>
 
               {statusMessage && (
-                <div className="rounded-lg p-2.5 text-center text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <div className="rounded-lg p-2.5 text-center text-xs sm:text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {statusMessage}
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 cursor-pointer"
+                className="w-full rounded-lg bg-red-600 py-3 text-sm font-semibold text-white transition hover:bg-red-700 cursor-pointer min-h-[44px] active:scale-[0.99]"
               >
                 Ajouter
               </button>

@@ -84,7 +84,7 @@ if (fs.existsSync(clientDistPath)) {
 }
 
 // React SPA fallback
-app.get("*", (req, res, next) => {
+app.get(/.*/, (req, res, next) => {
   if (req.path.startsWith("/api/")) {
     return res.status(404).json({ success: false, message: "Endpoint not found" });
   }

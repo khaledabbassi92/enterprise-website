@@ -216,7 +216,7 @@ function Media({
 }
 
 /* ============================================================
-   CUSTOM FRIENDLY VIDEO PLAYER (FULLSCREEN CENTERING & CONTINUITY)
+   CUSTOM FRIENDLY VIDEO PLAYER
 ============================================================ */
 
 const videoTimeCache = new Map();
@@ -233,7 +233,6 @@ function FriendlyVideoPlayer({ src, className = "" }) {
   const [showControls, setShowControls] = useState(false);
   const controlsTimeoutRef = useRef(null);
 
-  // Monitor fullscreen state changes
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(Boolean(document.fullscreenElement));
@@ -248,7 +247,6 @@ function FriendlyVideoPlayer({ src, className = "" }) {
     };
   }, []);
 
-  // Restore previous timestamp on mount / source change
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -343,7 +341,6 @@ function FriendlyVideoPlayer({ src, className = "" }) {
     }
   };
 
-  // MOUSE ACTIVITY: Hide immediately on leave, hide after 1.8s if mouse stays still
   const handleMouseMove = () => {
     setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
@@ -392,33 +389,30 @@ function FriendlyVideoPlayer({ src, className = "" }) {
         className={`object-contain shadow-2xl transition-all duration-200 ${
           isFullscreen
             ? "h-full w-full max-h-screen max-w-screen"
-            : "max-h-[72vh] max-w-[80vw]"
+            : "max-h-[60vh] sm:max-h-[72vh] max-w-[94vw] sm:max-w-[80vw]"
         }`}
       />
 
-      {/* BIG CENTER PLAY BUTTON WHEN PAUSED */}
       {!isPlaying && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600/90 text-white shadow-2xl backdrop-blur-md">
-            <Play size={26} className="ml-1 fill-white" />
+          <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-red-600/90 text-white shadow-2xl backdrop-blur-md">
+            <Play size={24} className="ml-1 fill-white" />
           </div>
         </div>
       )}
 
-      {/* SLEEK FLOATING BOTTOM CONTROLS (AUTO-HIDE ON LEAVE / IDLE) */}
       <div
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={() => {
           if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
           setShowControls(true);
         }}
-        className={`absolute bottom-4 left-4 right-4 z-30 mx-auto flex max-w-4xl flex-col gap-2 rounded-xl bg-black/75 px-4 py-2.5 backdrop-blur-md transition-all duration-300 ${
+        className={`absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4 z-30 mx-auto flex max-w-4xl flex-col gap-1.5 sm:gap-2 rounded-xl bg-black/75 px-3 py-2 sm:px-4 sm:py-2.5 backdrop-blur-md transition-all duration-300 ${
           showControls || !isPlaying
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-2 pointer-events-none"
         }`}
       >
-        {/* PROGRESS BAR */}
         <div
           onClick={handleSeek}
           className="relative h-1.5 w-full cursor-pointer overflow-hidden rounded-full bg-white/25 transition-all hover:h-2.5"
@@ -429,15 +423,15 @@ function FriendlyVideoPlayer({ src, className = "" }) {
           />
         </div>
 
-        <div className="flex items-center justify-between text-white text-xs">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between text-white text-[10px] sm:text-xs">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={togglePlay}
               className="p-1 hover:text-red-400 transition"
               aria-label={isPlaying ? "Pause" : "Lecture"}
             >
-              {isPlaying ? <Pause size={16} /> : <Play size={16} className="fill-white" />}
+              {isPlaying ? <Pause size={15} /> : <Play size={15} className="fill-white" />}
             </button>
 
             <button
@@ -446,10 +440,10 @@ function FriendlyVideoPlayer({ src, className = "" }) {
               className="p-1 hover:text-red-400 transition"
               aria-label={isMuted ? "Activer le son" : "Couper le son"}
             >
-              {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
             </button>
 
-            <span className="text-[11px] font-mono text-white/70">
+            <span className="text-[10px] sm:text-[11px] font-mono text-white/70">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
           </div>
@@ -460,7 +454,7 @@ function FriendlyVideoPlayer({ src, className = "" }) {
             className="p-1 hover:text-red-400 transition"
             aria-label={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
           >
-            {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
+            {isFullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
           </button>
         </div>
       </div>
@@ -498,7 +492,6 @@ function ProjectGallery({ project, onClose }) {
           .filter(Boolean)
       : [];
 
-    // Initial with Facade cover as the very first item
     const combinedInitial = [];
     if (cover) combinedInitial.push(cover);
     rawSubimages.forEach((item) => {
@@ -590,7 +583,7 @@ function ProjectGallery({ project, onClose }) {
 
   useEffect(() => {
     const keyboard = (event) => {
-      if (document.fullscreenElement) return; // let browser handle escape in fullscreen
+      if (document.fullscreenElement) return;
       if (event.key === "Escape") onClose();
       if (event.key === "ArrowRight") next();
       if (event.key === "ArrowLeft") previous();
@@ -611,7 +604,7 @@ function ProjectGallery({ project, onClose }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-3 backdrop-blur-md sm:p-8"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-2 sm:p-6 lg:p-8 backdrop-blur-md"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -621,10 +614,10 @@ function ProjectGallery({ project, onClose }) {
       <button
         type="button"
         onClick={onClose}
-        className="fixed right-5 top-5 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white backdrop-blur-md transition hover:bg-white/20"
+        className="fixed right-3 top-3 sm:right-5 sm:top-5 z-50 flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white backdrop-blur-md transition hover:bg-white/20"
         aria-label="Fermer"
       >
-        <X size={21} />
+        <X size={20} />
       </button>
 
       {/* NAVIGATION */}
@@ -636,10 +629,10 @@ function ProjectGallery({ project, onClose }) {
               event.stopPropagation();
               previous();
             }}
-            className="fixed left-3 top-1/2 z-50 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md transition hover:bg-red-600 sm:left-6"
+            className="fixed left-2 sm:left-6 top-1/2 z-50 flex h-10 w-10 sm:h-11 sm:w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md transition hover:bg-red-600"
             aria-label="Média précédent"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={22} />
           </button>
 
           <button
@@ -648,17 +641,17 @@ function ProjectGallery({ project, onClose }) {
               event.stopPropagation();
               next();
             }}
-            className="fixed right-3 top-1/2 z-50 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md transition hover:bg-red-600 sm:right-6"
+            className="fixed right-2 sm:right-6 top-1/2 z-50 flex h-10 w-10 sm:h-11 sm:w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md transition hover:bg-red-600"
             aria-label="Média suivant"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={22} />
           </button>
         </>
       )}
 
       {/* CONTENT */}
       <div
-        className="flex max-h-[90vh] max-w-[86vw] flex-col items-center"
+        className="flex max-h-[90vh] max-w-[95vw] sm:max-w-[86vw] flex-col items-center"
         onClick={(event) => event.stopPropagation()}
       >
         {loading ? (
@@ -681,7 +674,7 @@ function ProjectGallery({ project, onClose }) {
                 alt={project?.title || "Projet"}
                 onContextMenu={(e) => e.preventDefault()}
                 onDragStart={(e) => e.preventDefault()}
-                className="max-h-[72vh] max-w-[80vw] rounded-2xl bg-black/20 object-contain shadow-2xl select-none"
+                className="max-h-[60vh] sm:max-h-[72vh] max-w-[94vw] sm:max-w-[80vw] rounded-2xl bg-black/20 object-contain shadow-2xl select-none"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.2 }}
@@ -694,7 +687,7 @@ function ProjectGallery({ project, onClose }) {
           </div>
         )}
 
-        {/* DETAILS SECTION - DISAPPEARS WHEN PRESSED OR WHEN EMPTY */}
+        {/* DETAILS SECTION */}
         <AnimatePresence>
           {hasAnyText && !hideDetails && (
             <motion.div
@@ -703,16 +696,16 @@ function ProjectGallery({ project, onClose }) {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
               onClick={() => setHideDetails(true)}
-              className="mt-3 max-w-xl cursor-pointer rounded-xl bg-black/40 px-4 py-2 text-center text-white backdrop-blur-sm transition hover:bg-black/60"
+              className="mt-3 max-w-xl cursor-pointer rounded-xl bg-black/40 px-3 py-2 sm:px-4 sm:py-2 text-center text-white backdrop-blur-sm transition hover:bg-black/60"
             >
               {hasTitle && (
-                <h3 className="text-sm font-semibold sm:text-base">
+                <h3 className="text-xs font-semibold sm:text-base">
                   {project.title.trim()}
                 </h3>
               )}
 
               {hasDescription && (
-                <p className="mt-0.5 max-w-lg text-xs text-white/75 sm:text-sm">
+                <p className="mt-0.5 max-w-lg text-[11px] text-white/75 sm:text-sm">
                   {project.description.trim()}
                 </p>
               )}
@@ -720,9 +713,9 @@ function ProjectGallery({ project, onClose }) {
           )}
         </AnimatePresence>
 
-        {/* THUMBNAIL TRACK - FIRST ITEM IS THE FACADE COVER */}
+        {/* THUMBNAIL TRACK */}
         {gallery.length > 1 && (
-          <div className="mt-3 flex max-w-[80vw] gap-2 overflow-x-auto p-1">
+          <div className="mt-3 flex max-w-[90vw] sm:max-w-[80vw] gap-1.5 sm:gap-2 overflow-x-auto p-1">
             {gallery.map((image, index) => {
               const itemIsVideo = isVideoUrl(image);
               const isFacadeCover = index === 0;
@@ -732,7 +725,7 @@ function ProjectGallery({ project, onClose }) {
                   key={`${image}-${index}`}
                   type="button"
                   onClick={() => setCurrent(index)}
-                  className={`group relative h-12 w-16 shrink-0 overflow-hidden rounded-md transition ${
+                  className={`group relative h-10 w-14 sm:h-12 sm:w-16 shrink-0 overflow-hidden rounded-md transition ${
                     current === index
                       ? "scale-105 ring-2 ring-red-500 shadow-md"
                       : "opacity-40 hover:opacity-80"
@@ -974,12 +967,12 @@ export default function Realisations() {
   ========================================================== */
 
   return (
-    <main className="bg-white text-[#171717]">
+    <main className="overflow-x-hidden bg-white text-[#171717]">
       {/* ======================================================
           COMPACT INTRO
       ====================================================== */}
 
-      <header className="px-6 pb-8 pt-10 sm:px-10 sm:pb-10 sm:pt-12 lg:px-16">
+      <header className="px-5 pb-6 pt-8 sm:px-10 sm:pb-10 sm:pt-12 lg:px-16">
         <div className="mx-auto max-w-[1440px]">
           <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-red-600">
             <span className="h-px w-6 bg-red-600" />
@@ -987,7 +980,7 @@ export default function Realisations() {
           </div>
 
           <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl lg:text-5xl">
+            <h1 className="text-2xl font-semibold tracking-[-0.035em] sm:text-4xl lg:text-5xl">
               Des chantiers tenus,
               <span className="text-[#999]">
                 {" "}
@@ -1007,11 +1000,11 @@ export default function Realisations() {
           PROJECTS
       ====================================================== */}
 
-      <section className="px-6 pb-14 sm:px-10 sm:pb-16 lg:px-16 lg:pb-20">
+      <section className="px-5 pb-12 sm:px-10 sm:pb-16 lg:px-16 lg:pb-20">
         <div className="mx-auto max-w-[1440px]">
           {/* LOADING */}
           {loading && (
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
@@ -1023,7 +1016,7 @@ export default function Realisations() {
 
           {/* ERROR */}
           {!loading && error && (
-            <div className="rounded-2xl border border-[#e5e5e5] bg-[#fafafa] p-10 text-center">
+            <div className="rounded-2xl border border-[#e5e5e5] bg-[#fafafa] p-6 sm:p-10 text-center">
               <p className="text-sm font-medium">{error}</p>
               <p className="mt-2 text-xs text-[#888]">
                 Vérifiez la connexion au serveur puis rechargez la page.
@@ -1033,7 +1026,7 @@ export default function Realisations() {
 
           {/* EMPTY */}
           {!loading && !error && projects.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-[#ddd] bg-[#fafafa] p-12 text-center">
+            <div className="rounded-2xl border border-dashed border-[#ddd] bg-[#fafafa] p-8 sm:p-12 text-center">
               <p className="text-sm font-medium">
                 Aucune réalisation enregistrée.
               </p>
@@ -1043,7 +1036,7 @@ export default function Realisations() {
           {/* GRID */}
           {!loading && !error && visibleProjects.length > 0 && (
             <>
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
                 {visibleProjects.map((project, index) => {
                   const image =
                     project.cover ||
@@ -1081,26 +1074,26 @@ export default function Realisations() {
 
                       {/* VIDEO PLAY BADGE */}
                       {video && (
-                        <div className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md">
+                        <div className="absolute right-3 top-3 sm:right-4 sm:top-4 z-20 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md">
                           <Play size={13} className="translate-x-0.5 fill-white" />
                         </div>
                       )}
 
-                      {/* TEXT VISIBILITY TOGGLE BUTTON (SHOWN IF TEXT EXISTS) */}
+                      {/* TEXT VISIBILITY TOGGLE BUTTON */}
                       {hasContent && (
                         <button
                           type="button"
                           onClick={(e) => toggleCardText(index, e)}
-                          className="absolute left-4 top-4 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+                          className="absolute left-3 top-3 sm:left-4 sm:top-4 z-30 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
                           title={isTextHidden ? "Afficher les textes" : "Masquer les textes"}
                         >
-                          {isTextHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+                          {isTextHidden ? <Eye size={13} /> : <EyeOff size={13} />}
                         </button>
                       )}
 
                       {/* INFO SECTION */}
-                      <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-4 p-5 text-white sm:p-6">
-                        <div className="min-w-0 max-w-[80%]">
+                      <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-3 sm:gap-4 p-4 text-white sm:p-6">
+                        <div className="min-w-0 max-w-[78%] sm:max-w-[80%]">
                           <AnimatePresence>
                             {hasContent && !isTextHidden && (
                               <motion.div
@@ -1110,13 +1103,13 @@ export default function Realisations() {
                                 transition={{ duration: 0.18 }}
                               >
                                 {titleText && (
-                                  <h2 className="text-base font-semibold leading-snug sm:text-lg">
+                                  <h2 className="text-sm sm:text-base lg:text-lg font-semibold leading-snug">
                                     {titleText}
                                   </h2>
                                 )}
 
                                 {descText && (
-                                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/80 sm:text-sm">
+                                  <p className="mt-0.5 sm:mt-1 line-clamp-2 text-xs leading-5 text-white/80 sm:text-sm">
                                     {descText}
                                   </p>
                                 )}
@@ -1125,10 +1118,10 @@ export default function Realisations() {
                           </AnimatePresence>
                         </div>
 
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md transition-all duration-300 group-hover:border-red-500 group-hover:bg-red-600">
+                        <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md transition-all duration-300 group-hover:border-red-500 group-hover:bg-red-600">
                           <ArrowUpRight
-                            size={17}
-                            className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                            size={16}
+                            className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 sm:h-[17px] sm:w-[17px]"
                           />
                         </div>
                       </div>
@@ -1139,11 +1132,11 @@ export default function Realisations() {
 
               {/* SHOW ALL BUTTON */}
               {projects.length > 8 && (
-                <div className="mt-10 flex justify-center">
+                <div className="mt-8 sm:mt-10 flex justify-center">
                   <button
                     type="button"
                     onClick={() => setShowAll((value) => !value)}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#ddd] px-6 py-3 text-xs font-semibold transition hover:border-red-600 hover:text-red-600"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#ddd] px-5 sm:px-6 py-2.5 sm:py-3 text-xs font-semibold transition hover:border-red-600 hover:text-red-600"
                   >
                     {showAll ? (
                       <>

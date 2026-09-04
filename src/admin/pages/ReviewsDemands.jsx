@@ -34,16 +34,63 @@ export default function AdminDemandes() {
     setTimeout(() => setNotification(null), 4000);
   };
 
+  // Helper functions for date formatting
+  const formatDate = (isoString) => {
+    if (!isoString) return "—";
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleDateString("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return "—";
+    }
+  };
+
+  const formatTime = (isoString) => {
+    if (!isoString) return "";
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "";
+    }
+  };
+
+  // Get admin token from localStorage
+  const getAdminToken = () => {
+    return localStorage.getItem("admin_token");
+  };
+
   // ============================================================
-  // 1. CHARGEMENT DES DEMANDES D'AVIS
+  // 1. CHARGEMENT DES DEMANDES D'AVIS (SECURED)
   // ============================================================
   const fetchDemandes = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_URL}/demandeavis`);
-      if (!res.ok) throw new Error(`Erreur réseau (${res.status})`);
+      const token = getAdminToken();
+      if (!token) {
+        setError("Authentification requise. Veuillez vous reconnecter.");
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/demandeavis`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Erreur réseau (${res.status})`);
+      }
 
       const data = await res.json();
       setDemandes(Array.isArray(data) ? data : []);
@@ -60,14 +107,20 @@ export default function AdminDemandes() {
   }, []);
 
   // ============================================================
-  // 2. AJOUTER (Envoi propre vers reviews.json puis suppression de demandesavis.json)
+  // 2. ACCEPTER - Add to reviews.json THEN delete from demands
   // ============================================================
   const handleAccept = async (item) => {
     const actionKey = `${item.name}-${item.timeSent || item.description}`;
     try {
       setProcessingKey(actionKey);
 
-      // Objet propre au format normal attendu pour reviews.json (SANS contact, SANS timeSent)
+      const token = getAdminToken();
+      if (!token) {
+        showNotification("error", "Authentification requise.");
+        return;
+      }
+
+      // Payload pour /api/reviews
       const reviewPayload = {
         name: (item.name || "Client").trim(),
         rating:
@@ -77,102 +130,97 @@ export default function AdminDemandes() {
         description: (item.description || "").trim(),
       };
 
-      // Identifiant pour supprimer de demandesavis.json
-      const deletePayload = {
-        name: item.name,
-        timeSent: item.timeSent,
-      };
+      // Step 1: Add to reviews.json via reviewsmachine secured route
+      const resReviews = await fetch(`${API_URL}/api/reviews`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(reviewPayload),
+      });
 
-      let added = false;
-
-      // 1. Envoi au format normal vers /api/reviews
-      try {
-        const resReviews = await fetch(`${API_URL}/api/reviews`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(reviewPayload),
-        });
-
-        if (resReviews.ok) {
-          added = true;
-        }
-      } catch (err) {
-        console.warn("Could not post to /api/reviews directly:", err);
+      if (!resReviews.ok) {
+        throw new Error(
+          `Impossible d'ajouter l'avis à reviews.json (${resReviews.status})`
+        );
       }
 
-      // Fallback vers /demandeavis/accept si le serveur centralise sous /demandeavis
-      if (!added) {
-        const resAccept = await fetch(`${API_URL}/demandeavis/accept`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...reviewPayload,
-            timeSent: item.timeSent,
-          }),
-        });
+      // Step 2: Delete from demandesavis.json
+      const resDelete = await fetch(`${API_URL}/demandeavis/delete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: item.name,
+          timeSent: item.timeSent,
+        }),
+      });
 
-        if (!resAccept.ok) {
-          throw new Error(`Erreur lors de l'ajout (${resAccept.status})`);
-        }
+      if (!resDelete.ok) {
+        throw new Error(
+          `Impossible de supprimer de demandesavis.json (${resDelete.status})`
+        );
       }
 
-      // 2. Suppression de l'objet dans demandesavis.json
-      try {
-        await fetch(`${API_URL}/demandeavis/delete`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(deletePayload),
-        });
-      } catch (delErr) {
-        console.warn("Could not delete from /demandeavis/delete:", delErr);
-      }
-
-      // 3. Retrait immédiat de l'affichage local
+      // Remove from UI only after BOTH operations succeed
       setDemandes((prev) =>
         prev.filter((d) => !(d.name === item.name && d.timeSent === item.timeSent))
       );
 
       showNotification(
         "success",
-        `L'avis de ${item.name || "ce client"} a été validé et ajouté à reviews.json.`
+        `L'avis de ${item.name || "ce client"} a été approuvé et ajouté aux avis.`
       );
     } catch (err) {
-      console.error("Erreur lors de l'ajout:", err);
-      showNotification("error", "Une erreur est survenue lors de l'ajout de l'avis.");
+      console.error("Erreur lors de l'approbation:", err);
+      showNotification("error", `Erreur: ${err.message}`);
     } finally {
       setProcessingKey(null);
     }
   };
 
   // ============================================================
-  // 3. SUPPRIMER (Supprime uniquement de demandesavis.json)
+  // 3. SUPPRIMER - Delete from demandesavis.json (SECURED)
   // ============================================================
   const handleDelete = async (item) => {
     const actionKey = `${item.name}-${item.timeSent || item.description}`;
     try {
       setProcessingKey(actionKey);
 
-      const deletePayload = {
-        name: item.name,
-        timeSent: item.timeSent,
-      };
+      const token = getAdminToken();
+      if (!token) {
+        showNotification("error", "Authentification requise.");
+        return;
+      }
 
       const res = await fetch(`${API_URL}/demandeavis/delete`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(deletePayload),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: item.name,
+          timeSent: item.timeSent,
+        }),
       });
 
       if (!res.ok) {
         throw new Error(`Erreur ${res.status}`);
       }
 
-      // Retrait immédiat de l'affichage local
+      // Remove from UI only after successful deletion
       setDemandes((prev) =>
         prev.filter((d) => !(d.name === item.name && d.timeSent === item.timeSent))
       );
 
-      showNotification("success", `La demande de ${item.name || "ce client"} a été supprimée.`);
+      showNotification(
+        "success",
+        `La demande de ${item.name || "ce client"} a été supprimée.`
+      );
     } catch (err) {
       console.error("Erreur lors de la suppression:", err);
       showNotification("error", "Erreur lors de la suppression de la demande.");
@@ -193,26 +241,25 @@ export default function AdminDemandes() {
           );
 
           return (
-            <div key={starIndex} className="relative inline-block">
+            <div key={starIndex} className="relative" style={{ width: size, height: size }}>
               <Star
                 size={size}
-                className="text-[#e2e8f0]"
-                strokeWidth={1.5}
-                fill="#e2e8f0"
+                className="absolute text-black/20"
+                fill="currentColor"
               />
-              {fillPercentage > 0 && (
-                <div
-                  className="absolute top-0 left-0 overflow-hidden"
-                  style={{ width: `${fillPercentage}%` }}
-                >
-                  <Star
-                    size={size}
-                    className="text-[#f59e0b]"
-                    strokeWidth={1.5}
-                    fill="#f59e0b"
-                  />
-                </div>
-              )}
+              <div
+                style={{
+                  width: `${fillPercentage}%`,
+                  overflow: "hidden",
+                  height: "100%",
+                }}
+              >
+                <Star
+                  size={size}
+                  className="text-amber-500"
+                  fill="currentColor"
+                />
+              </div>
             </div>
           );
         })}
@@ -220,339 +267,268 @@ export default function AdminDemandes() {
     );
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "Date non renseignée";
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return dateString;
-      return new Intl.DateTimeFormat("fr-FR", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }).format(date);
-    } catch {
-      return dateString;
-    }
-  };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return "";
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "";
-      return new Intl.DateTimeFormat("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(date);
-    } catch {
-      return "";
-    }
-  };
-
+  // Filtrage et tri
   const filteredDemandes = demandes
-    .filter((item) => {
-      const nameMatch = (item.name || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const descMatch = (item.description || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const contactMatch = (item.contact || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+    .filter((d) => {
+      const matchesSearch =
+        !searchQuery ||
+        d.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        d.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        d.contact?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      if (!(nameMatch || descMatch || contactMatch)) return false;
+      const matchesRating =
+        ratingFilter === "all" ||
+        Number(d.rating) === Number(ratingFilter);
 
-      if (ratingFilter === "all") return true;
-      const rounded = Math.round(Number(item.rating) || 0);
-      return rounded === Number(ratingFilter);
+      return matchesSearch && matchesRating;
     })
     .sort((a, b) => {
       if (sortBy === "recent") {
-        return new Date(b.timeSent || 0).getTime() - new Date(a.timeSent || 0).getTime();
-      }
-      if (sortBy === "oldest") {
-        return new Date(a.timeSent || 0).getTime() - new Date(b.timeSent || 0).getTime();
-      }
-      if (sortBy === "rating-high") {
-        return (Number(b.rating) || 0) - (Number(a.rating) || 0);
-      }
-      if (sortBy === "rating-low") {
-        return (Number(a.rating) || 0) - (Number(b.rating) || 0);
+        return new Date(b.timeSent || 0) - new Date(a.timeSent || 0);
+      } else if (sortBy === "oldest") {
+        return new Date(a.timeSent || 0) - new Date(b.timeSent || 0);
+      } else if (sortBy === "rating-high") {
+        return Number(b.rating) - Number(a.rating);
+      } else if (sortBy === "rating-low") {
+        return Number(a.rating) - Number(b.rating);
       }
       return 0;
     });
 
   return (
-    <div className="min-h-screen bg-[#fafafa] p-4 sm:p-6 lg:p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-6">
-
-        {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-black/10 shadow-sm">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
-                <Inbox size={22} />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-black tracking-tight">
-                  Demandes d'avis
-                </h1>
-                <p className="text-xs text-black/50 mt-0.5">
-                  Modérez et validez les avis soumis par vos clients avant publication.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {demandes.length > 0 ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                {demandes.length} nouvelle{demandes.length > 1 ? "s" : ""} demande{demandes.length > 1 ? "s" : ""}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <Check size={13} className="text-emerald-600" />
-                Tout est à jour
-              </span>
-            )}
-
-            <button
-              onClick={fetchDemandes}
-              disabled={loading}
-              className="p-2.5 rounded-xl border border-black/10 text-black/70 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition disabled:opacity-50 cursor-pointer"
-              title="Actualiser la liste"
-            >
-              <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-            </button>
-          </div>
-        </div>
-
-        {/* NOTIFICATION BANNER */}
-        {notification && (
-          <div
-            className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium shadow-sm transition-all ${
-              notification.type === "success"
-                ? "border border-green-200 bg-green-50 text-green-800"
-                : "border border-red-200 bg-red-50 text-red-800"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Check size={16} className={notification.type === "success" ? "text-green-600" : "text-red-600"} />
-              <span>{notification.text}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setNotification(null)}
-              className="text-xs font-semibold hover:opacity-75 cursor-pointer ml-4"
-            >
-              Fermer
-            </button>
-          </div>
-        )}
-
-        {/* CONTROLS */}
-        <div className="bg-white p-4 rounded-2xl border border-black/10 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-          <div className="relative flex-1">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/40" />
-            <input
-              type="text"
-              placeholder="Rechercher par nom, message ou contact..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-black/10 bg-black/[0.02] focus:bg-white focus:border-red-500 focus:outline-none transition"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <select
-              value={ratingFilter}
-              onChange={(e) => setRatingFilter(e.target.value)}
-              className="px-3 py-2 text-xs font-medium rounded-xl border border-black/10 bg-black/[0.02] text-black/80 focus:bg-white focus:outline-none cursor-pointer"
-            >
-              <option value="all">Toutes les notes</option>
-              <option value="5">5 étoiles</option>
-              <option value="4">4 étoiles</option>
-              <option value="3">3 étoiles</option>
-              <option value="2">2 étoiles</option>
-              <option value="1">1 étoile</option>
-            </select>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 text-xs font-medium rounded-xl border border-black/10 bg-black/[0.02] text-black/80 focus:bg-white focus:outline-none cursor-pointer"
-            >
-              <option value="recent">Plus récentes d'abord</option>
-              <option value="oldest">Plus anciennes d'abord</option>
-              <option value="rating-high">Meilleures notes</option>
-              <option value="rating-low">Moins bonnes notes</option>
-            </select>
-          </div>
-        </div>
-
-        {/* LOADING */}
-        {loading && (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map((idx) => (
-              <div
-                key={idx}
-                className="h-64 rounded-2xl border border-black/10 bg-white p-6 shadow-sm animate-pulse flex flex-col justify-between"
-              >
-                <div className="space-y-3">
-                  <div className="h-4 bg-black/10 rounded w-1/3" />
-                  <div className="h-3 bg-black/10 rounded w-1/4" />
-                  <div className="h-16 bg-black/5 rounded w-full mt-4" />
-                </div>
-                <div className="h-10 bg-black/10 rounded-xl" />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ERROR */}
-        {!loading && error && (
-          <div className="p-8 rounded-2xl bg-red-50 border border-red-200 text-center space-y-3">
-            <AlertCircle size={32} className="mx-auto text-red-600" />
-            <div className="text-sm font-bold text-red-900">{error}</div>
-            <p className="text-xs text-red-700/80 max-w-md mx-auto">
-              Vérifiez que votre fichier <code>demandesavis.json</code> existe et que la route GET /demandeavis est déclarée.
-            </p>
-            <button
-              onClick={fetchDemandes}
-              className="mt-2 px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-xl hover:bg-red-700 transition"
-            >
-              Réessayer
-            </button>
-          </div>
-        )}
-
-        {/* EMPTY STATE */}
-        {!loading && !error && filteredDemandes.length === 0 && (
-          <div className="bg-white rounded-2xl border border-black/10 p-12 text-center shadow-sm">
-            <div className="w-12 h-12 rounded-2xl bg-black/[0.04] text-black/40 flex items-center justify-center mx-auto mb-3">
-              <Inbox size={24} />
-            </div>
-            <h3 className="text-base font-bold text-black">Aucune demande d'avis trouvée</h3>
-            <p className="text-xs text-black/50 mt-1 max-w-sm mx-auto">
-              {searchQuery || ratingFilter !== "all"
-                ? "Aucun résultat ne correspond à vos filtres actuels. Essayez de réinitialiser la recherche."
-                : "Toutes les demandes ont été modérées."}
-            </p>
-          </div>
-        )}
-
-        {/* CARDS GRID */}
-        {!loading && !error && filteredDemandes.length > 0 && (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {filteredDemandes.map((item, index) => {
-              const numRating = Number(item.rating) || 5;
-              const dateFormatted = formatDate(item.timeSent);
-              const timeFormatted = formatTime(item.timeSent);
-              const isProcessing = processingKey === `${item.name}-${item.timeSent || item.description}`;
-
-              return (
-                <div
-                  key={`${item.name}-${item.timeSent || index}`}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-black/10 bg-white p-5 shadow-sm transition hover:shadow-md hover:border-black/20"
-                >
-                  <div>
-                    {/* CARD HEADER */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-600 font-bold text-white text-sm">
-                          {(item.name || "C").charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="truncate text-sm font-bold text-black">
-                            {item.name || "Client anonyme"}
-                          </h3>
-                          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-black/50">
-                            <Calendar size={12} />
-                            <span>{dateFormatted}</span>
-                            {timeFormatted && (
-                              <>
-                                <span>•</span>
-                                <Clock size={11} />
-                                <span>{timeFormatted}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700 border border-amber-200 shrink-0">
-                        <Star size={13} className="fill-amber-500 text-amber-500" />
-                        <span>{numRating.toFixed(1)}</span>
-                      </div>
-                    </div>
-
-                    {/* STARS */}
-                    <div className="mt-3 flex items-center gap-2">
-                      {renderStars(numRating, 14)}
-                      <span className="text-[11px] text-black/40 font-medium">
-                        ({numRating}/5)
-                      </span>
-                    </div>
-
-                    {/* CONTACT INFO */}
-                    {item.contact && (
-                      <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-black/[0.02] border border-black/5 px-2.5 py-1.5 text-xs text-black/70">
-                        {item.contact.includes("@") ? (
-                          <Mail size={13} className="shrink-0 text-black/40" />
-                        ) : (
-                          <Phone size={13} className="shrink-0 text-black/40" />
-                        )}
-                        <span className="truncate">{item.contact}</span>
-                      </div>
-                    )}
-
-                    {/* DESCRIPTION */}
-                    <div className="mt-4 rounded-xl bg-black/[0.015] border border-black/5 p-3.5">
-                      <p className="text-xs leading-relaxed text-black/80 whitespace-pre-line italic">
-                        "{item.description || "Aucun message rédigé."}"
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* BUTTONS */}
-                  <div className="mt-5 flex items-center gap-2 border-t border-black/10 pt-4">
-                    {/* AJOUTER */}
-                    <button
-                      type="button"
-                      onClick={() => handleAccept(item)}
-                      disabled={isProcessing}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-3 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 cursor-pointer active:scale-95 disabled:opacity-50"
-                      title="Ajouter cet avis à reviews.json et supprimer la demande"
-                    >
-                      {isProcessing ? (
-                        <RefreshCw size={14} className="animate-spin" />
-                      ) : (
-                        <Check size={14} />
-                      )}
-                      <span>Ajouter</span>
-                    </button>
-
-                    {/* SUPPRIMER */}
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(item)}
-                      disabled={isProcessing}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-xs font-semibold text-black/70 shadow-sm transition hover:bg-red-50 hover:text-red-600 hover:border-red-200 cursor-pointer active:scale-95 disabled:opacity-50"
-                      title="Supprimer la demande de demandesavis.json"
-                    >
-                      <Trash2 size={14} />
-                      <span>Supprimer</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-black">Demandes d'avis</h1>
+        <p className="text-sm text-black/60">
+          Gérez les demandes d'avis en attente. Approuvez pour ajouter aux avis
+          publiés ou supprimez pour rejeter.
+        </p>
       </div>
+
+      {/* NOTIFICATION */}
+      {notification && (
+        <div
+          className={`p-4 rounded-xl border flex items-center gap-3 ${
+            notification.type === "success"
+              ? "bg-green-50 border-green-200 text-green-700"
+              : "bg-red-50 border-red-200 text-red-700"
+          }`}
+        >
+          <AlertCircle size={18} />
+          <span className="text-sm font-medium">{notification.text}</span>
+        </div>
+      )}
+
+      {/* CONTROLS */}
+      <div className="space-y-4">
+        <div className="relative">
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40"
+          />
+          <input
+            type="text"
+            placeholder="Rechercher par nom, email, téléphone ou message..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-black/10 bg-black/[0.02] focus:bg-white focus:border-red-500 focus:outline-none transition"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={ratingFilter}
+            onChange={(e) => setRatingFilter(e.target.value)}
+            className="px-3 py-2 text-xs font-medium rounded-xl border border-black/10 bg-black/[0.02] text-black/80 focus:bg-white focus:outline-none cursor-pointer"
+          >
+            <option value="all">Toutes les notes</option>
+            <option value="5">5 étoiles</option>
+            <option value="4">4 étoiles</option>
+            <option value="3">3 étoiles</option>
+            <option value="2">2 étoiles</option>
+            <option value="1">1 étoile</option>
+          </select>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 text-xs font-medium rounded-xl border border-black/10 bg-black/[0.02] text-black/80 focus:bg-white focus:outline-none cursor-pointer"
+          >
+            <option value="recent">Plus récentes d'abord</option>
+            <option value="oldest">Plus anciennes d'abord</option>
+            <option value="rating-high">Meilleures notes</option>
+            <option value="rating-low">Moins bonnes notes</option>
+          </select>
+        </div>
+      </div>
+
+      {/* LOADING */}
+      {loading && (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((idx) => (
+            <div
+              key={idx}
+              className="h-64 rounded-2xl border border-black/10 bg-white p-6 shadow-sm animate-pulse flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="h-4 bg-black/10 rounded w-1/3" />
+                <div className="h-3 bg-black/10 rounded w-1/4" />
+                <div className="h-16 bg-black/5 rounded w-full mt-4" />
+              </div>
+              <div className="h-10 bg-black/10 rounded-xl" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ERROR */}
+      {!loading && error && (
+        <div className="p-8 rounded-2xl bg-red-50 border border-red-200 text-center space-y-3">
+          <AlertCircle size={32} className="mx-auto text-red-600" />
+          <div className="text-sm font-bold text-red-900">{error}</div>
+          <p className="text-xs text-red-700/80 max-w-md mx-auto">
+            Vérifiez votre authentification et que le fichier{" "}
+            <code>demandesavis.json</code> existe.
+          </p>
+          <button
+            onClick={fetchDemandes}
+            className="mt-2 px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-xl hover:bg-red-700 transition"
+          >
+            Réessayer
+          </button>
+        </div>
+      )}
+
+      {/* EMPTY STATE */}
+      {!loading && !error && filteredDemandes.length === 0 && (
+        <div className="bg-white rounded-2xl border border-black/10 p-12 text-center shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-black/[0.04] text-black/40 flex items-center justify-center mx-auto mb-3">
+            <Inbox size={24} />
+          </div>
+          <h3 className="text-base font-bold text-black">
+            Aucune demande d'avis trouvée
+          </h3>
+          <p className="text-xs text-black/50 mt-1 max-w-sm mx-auto">
+            {searchQuery || ratingFilter !== "all"
+              ? "Aucun résultat ne correspond à vos filtres actuels. Essayez de réinitialiser la recherche."
+              : "Toutes les demandes ont été modérées."}
+          </p>
+        </div>
+      )}
+
+      {/* CARDS GRID */}
+      {!loading && !error && filteredDemandes.length > 0 && (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {filteredDemandes.map((item, index) => {
+            const numRating = Number(item.rating) || 5;
+            const dateFormatted = formatDate(item.timeSent);
+            const timeFormatted = formatTime(item.timeSent);
+            const isProcessing =
+              processingKey === `${item.name}-${item.timeSent || item.description}`;
+
+            return (
+              <div
+                key={`${item.name}-${item.timeSent || index}`}
+                className="group relative flex flex-col justify-between rounded-2xl border border-black/10 bg-white p-5 shadow-sm transition hover:shadow-md hover:border-black/20"
+              >
+                <div>
+                  {/* CARD HEADER */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-600 font-bold text-white text-sm">
+                        {(item.name || "C").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-bold text-black">
+                          {item.name || "Client anonyme"}
+                        </h3>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-black/50">
+                          <Calendar size={12} />
+                          <span>{dateFormatted}</span>
+                          {timeFormatted && (
+                            <>
+                              <span>•</span>
+                              <Clock size={11} />
+                              <span>{timeFormatted}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700 border border-amber-200 shrink-0">
+                      <Star
+                        size={13}
+                        className="fill-amber-500 text-amber-500"
+                      />
+                      <span>{numRating.toFixed(1)}</span>
+                    </div>
+                  </div>
+
+                  {/* STARS */}
+                  <div className="mt-3 flex items-center gap-2">
+                    {renderStars(numRating, 14)}
+                    <span className="text-[11px] text-black/40 font-medium">
+                      ({numRating}/5)
+                    </span>
+                  </div>
+
+                  {/* CONTACT INFO */}
+                  {item.contact && (
+                    <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-black/[0.02] border border-black/5 px-2.5 py-1.5 text-xs text-black/70">
+                      {item.contact.includes("@") ? (
+                        <Mail size={13} className="shrink-0 text-black/40" />
+                      ) : (
+                        <Phone size={13} className="shrink-0 text-black/40" />
+                      )}
+                      <span className="truncate">{item.contact}</span>
+                    </div>
+                  )}
+
+                  {/* DESCRIPTION */}
+                  <div className="mt-4 rounded-xl bg-black/[0.015] border border-black/5 p-3.5">
+                    <p className="text-xs leading-relaxed text-black/80 whitespace-pre-line italic">
+                      "{item.description || "Aucun message rédigé."}"
+                    </p>
+                  </div>
+                </div>
+
+                {/* BUTTONS */}
+                <div className="mt-5 flex items-center gap-2 border-t border-black/10 pt-4">
+                  {/* APPROUVER */}
+                  <button
+                    type="button"
+                    onClick={() => handleAccept(item)}
+                    disabled={isProcessing}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-3 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 cursor-pointer active:scale-95 disabled:opacity-50"
+                    title="Approuver: ajouter aux avis et supprimer de la file d'attente"
+                  >
+                    {isProcessing ? (
+                      <RefreshCw size={14} className="animate-spin" />
+                    ) : (
+                      <Check size={14} />
+                    )}
+                    <span>Approuver</span>
+                  </button>
+
+                  {/* SUPPRIMER */}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(item)}
+                    disabled={isProcessing}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-xs font-semibold text-black/70 shadow-sm transition hover:bg-red-50 hover:text-red-600 hover:border-red-200 cursor-pointer active:scale-95 disabled:opacity-50"
+                    title="Supprimer la demande d'avis"
+                  >
+                    <Trash2 size={14} />
+                    <span>Supprimer</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
