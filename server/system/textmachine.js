@@ -11,7 +11,8 @@ const router = express.Router();
 // ============================================================
 
 const textFilePath = path.join(
-  process.cwd(),
+  __dirname,
+  "..",
   "text.json"
 );
 

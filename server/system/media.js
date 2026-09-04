@@ -9,7 +9,7 @@ const { requireAdminAuth } = require("./admin");
 const router = express.Router();
 
 const projectsDirectory = path.join(__dirname, "projects");
-const mediaConfigPath = path.join(process.cwd(), "media.json");
+const mediaConfigPath = path.join(__dirname, "..", "media.json");
 
 if (!fs.existsSync(projectsDirectory)) {
   fs.mkdirSync(projectsDirectory, { recursive: true });

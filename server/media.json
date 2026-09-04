@@ -1,23 +1,109 @@
 {
   "homepage": {
-    "banner": null,
-    "introduction": null,
-    "finale": null,
+    "banner": {
+      "file": "1788482384484-89c40755d9ef588e.jpg",
+      "x": 50,
+      "y": 53.0023,
+      "width": 100,
+      "height": 37.5,
+      "zoom": 1,
+      "offsetX": 0,
+      "offsetY": -3.0023
+    },
+    "introduction": {
+      "file": "1788482384398-a1f698a8ff28f8bb.jpg",
+      "x": 43.9376,
+      "y": 64.5502,
+      "width": 70,
+      "height": 46.6667,
+      "zoom": 1.4286,
+      "offsetX": 8.6606,
+      "offsetY": -20.786
+    },
+    "finale": {
+      "file": "1788482384434-2adb67142c2dcad8.jpg",
+      "x": 50,
+      "y": 52.5405,
+      "width": 100,
+      "height": 66.6685,
+      "zoom": 1,
+      "offsetX": 0,
+      "offsetY": -2.5405
+    },
     "gallery": {
       "facades": [
         {
-          "file": null,
-          "x": 50,
-          "y": 50,
-          "width": 100,
-          "height": 57.9799,
-          "zoom": 1,
-          "offsetX": 0,
-          "offsetY": 0,
+          "file": "1788482384484-89c40755d9ef588e.jpg",
           "title": "",
           "description": "",
           "index": 1,
-          "subimages": []
+          "x": 50,
+          "y": 50,
+          "width": 100,
+          "height": 56.25,
+          "zoom": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "subimages": [
+            "1788482384477-268da2b1522d088a.jpg",
+            "1788482384462-d5fc9a353a3ceedc.jpg",
+            "1788482384459-988addc56342faa0.jpg",
+            "1788482384468-b4b6538ad472fce1.jpg",
+            "1788482384459-ffb3979224ef5cbb.jpg",
+            "1788482384472-65fa876c219d83a5.jpg",
+            "1788482384448-284d07c0f66bd719.jpg",
+            "1788482384434-2adb67142c2dcad8.jpg"
+          ]
+        },
+        {
+          "file": "1788482384398-a1f698a8ff28f8bb.jpg",
+          "title": "",
+          "description": "",
+          "index": 2,
+          "x": 40.6525,
+          "y": 40.6536,
+          "width": 81.305,
+          "height": 81.3072,
+          "zoom": 1.2299,
+          "offsetX": 11.4968,
+          "offsetY": 11.4955,
+          "subimages": [
+            "1788482384406-e6b186bb64790464.jpg",
+            "1788482384440-2aa8773851fab47e.jpg"
+          ]
+        },
+        {
+          "file": "1788482384428-522aaf684cda5791.jpg",
+          "title": "",
+          "description": "",
+          "index": 3,
+          "x": 41.6858,
+          "y": 48.6143,
+          "width": 82.6907,
+          "height": 82.693,
+          "zoom": 1.2093,
+          "offsetX": 10.0546,
+          "offsetY": 1.6758,
+          "subimages": [
+            "1788482384479-ffe7c119711d0a48.jpg"
+          ]
+        },
+        {
+          "file": "1788482384453-6f76d3c576100c49.jpg",
+          "title": "",
+          "description": "",
+          "index": 4,
+          "x": 50,
+          "y": 36.6051,
+          "width": 100,
+          "height": 56.25,
+          "zoom": 1,
+          "offsetX": 0,
+          "offsetY": 13.3949,
+          "subimages": [
+            "1788482384441-f38f78be1e0e398d.jpg",
+            "1788482384442-7c729eedf14b01d8.jpg"
+          ]
         }
       ]
     }
